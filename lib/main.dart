@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'apikeys.dart' as api;
 Future<void> main () async {
   await Supabase.initialize(
-      url: 'https://qojuaxoxgmrnytovntlj.supabase.co',
-      anonKey: 'sb_publishable_LIhWkfy8LUS88qqTqeO03g_c4_eqDLt');
+      url: api.url,
+      anonKey: api.anonkey);
   runApp(MaterialApp(home: MinuteApp()));
 }
 
