@@ -23,7 +23,7 @@ class _MinuteAppState extends State<MinuteApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Minute"),),
+      appBar: AppBar(title: Text("Minute", style: TextStyle(fontSize: 30),), backgroundColor: Colors.lightBlue,),
       body: screen[screenIndex],
       bottomNavigationBar: NavigationBar(
         destinations: [
@@ -59,10 +59,10 @@ class _HomeScreenState extends State<HomeScreen>{
             }
             final messagesData = snapshot.data!;
             return (
-              ListView.builder(itemCount: messagesData.length,itemBuilder: (BuildContext context, int index){
+              ListView.separated(itemCount: messagesData.length,itemBuilder: (BuildContext context, int index){
                 var messageTmp = messagesData[index]['message'];
-                return(Text("$messageTmp"));
-              })
+                return(Text("$messageTmp", style: TextStyle(fontSize: 20),));
+              }, separatorBuilder: (BuildContext context, int index) => const Divider(),)
             );
 
           },
@@ -72,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen>{
         children: [
           Expanded(
               child: TextField(
+                decoration: InputDecoration(border: OutlineInputBorder(), hintText: "Enter your message here", filled: true, fillColor: Colors.white70, hoverColor: Color.fromRGBO(93, 183, 222, 1)),
                 controller: _msgController,
                 onSubmitted: (String input) async {
                   await Supabase.instance.client.from('table').insert({'message': input});
@@ -97,7 +98,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Text("Version : 0.0.1");
+    return const Text("Version : 0.0.1", style: TextStyle(fontSize: 30),);
   }
 }
 
