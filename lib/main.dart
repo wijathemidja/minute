@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main () async {
+  await Supabase.initialize(
+      url: 'https://qojuaxoxgmrnytovntlj.supabase.co',
+      anonKey: 'sb_publishable_fFIrjhWDciitizwlJRe4BQ_8aSvQHZ4');
   runApp(MaterialApp(home: MinuteApp()));
 }
 
@@ -44,16 +48,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>{
   List<String> messages = [];
+  final _supabaseData = Supabase.instance.client.from('table').select().order('createdAt', ascending: true);
   final TextEditingController _msgController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView.builder(
-          itemBuilder: (BuildContext context, int index){
-            String msg = messages[index];
-            return(Text(msg));
+      body: FutureBuilder(future: _supabaseData,
+          builder: (context, snapshot){
+            if (!snapshot.hasData){
+              return const Center(child: CircularProgressIndicator());
+            }
+            final messagesData = snapshot.data!;
+            return (
+              ListView.builder(itemCount: messagesData.length,itemBuilder: (BuildContext context, int index){
+                var messageTmp = messagesData[index]['message'];
+                return(Text("$messageTmp"));
+              })
+            );
+
           },
-          itemCount: messages.length,
 
       ),
       bottomNavigationBar: Row(
@@ -61,17 +74,13 @@ class _HomeScreenState extends State<HomeScreen>{
           Expanded(
               child: TextField(
                 controller: _msgController,
-                onSubmitted: (String input){
-                  setState(() {
-                    messages.add(input);
-                  });
+                onSubmitted: (String input) async {
+                  await Supabase.instance.client.from('table').insert({'message': input});
                   },
               )),
           IconButton.filled(
-              onPressed: (){
-                setState(() {
-                  messages.add(_msgController.text);
-                });
+              onPressed: () async {
+                await Supabase.instance.client.from('table').insert({'message': _msgController.text});
                 },
               icon: Icon(Icons.arrow_upward))
         ],),);
@@ -92,3 +101,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Text("settings");
   }
 }
+
