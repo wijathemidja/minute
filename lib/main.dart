@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main () async {
   await Supabase.initialize(
-      url: 'https://qojuaxoxgmrnytovntlj.supabase.co',
-      anonKey: 'sb_publishable_fFIrjhWDciitizwlJRe4BQ_8aSvQHZ4');
+      url: /*ENTER YOUR url */,
+      anonKey: /*ENTER YOUR KEY */);
   runApp(MaterialApp(home: MinuteApp()));
 }
 
