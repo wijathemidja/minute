@@ -119,39 +119,26 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  Future<void> addUsrStorage(_username) async {
+  Future<void> addUsrStorage(String username) async {
     final storage = await SharedPreferences.getInstance();
-    storage.setString('username', _username);
+    storage.setString('username', username);
   }
-  TextEditingController _UsernameController = TextEditingController();
-  Future<String> getUsr = getUsername();
+  final TextEditingController _usernameController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    return (Column(children: [Text("Version : 0.0.1", style: TextStyle(fontSize: 25),), TextField(controller: _UsernameController, onChanged: (String input) async {
-      await addUsername(_UsernameController.text);
-    },), FutureBuilder(future: getUsr, builder: (context, snapshot){
-      if (!snapshot.hasData){
-        return(CircularProgressIndicator());
-      }
-      final usernameData = snapshot.data!;
-      return(Text(usernameData));
-    })]));
+    return (Column(children: [
+      Text("Version : 0.0.1", style: TextStyle(fontSize: 25),),
+      TextField(
+        decoration: InputDecoration(label: Text('Enter your username')),
+        controller: _usernameController,
+        onChanged: (String input) async {
+          await addUsername(_usernameController.text);
+    },),]
+    ));
   }
 }
 
-Future<String> getUsername() async{
-  final storage = await SharedPreferences.getInstance();
-  late String tempUsr;
-  if (storage.getString('username') != null){
-    tempUsr = storage.getString('username')!;
-  } else {
-    tempUsr = 'DefaultUser';
-  }
-  String username = tempUsr;
-  return(username);
-}
-
-Future<void> addUsername (username) async {
+Future<void> addUsername (String username) async {
   final storage = await SharedPreferences.getInstance();
   storage.setString('username', username);
 }
