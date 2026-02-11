@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'apikeys.dart' as api;
@@ -62,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
       .order('createdAt', ascending: true);
   final TextEditingController _msgController = TextEditingController();
   final FocusNode focusNode = FocusNode();
-  User? userSB = Supabase.instance.client.auth.currentUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,13 +109,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
                 final storage = await SharedPreferences.getInstance();
                 String usr = 'DefaultFlutterUser';
+                final authusrinfo = Supabase.instance.client.auth.currentUser!.id.toString();
                 if (storage.getString('username') != null) {
                   usr = storage.getString('username')!;
                 }
                 await Supabase.instance.client.from('table').insert({
                   'message': censoredInput.censored,
                   'username': usr,
-                  'userAuth': userSB,
+                  'userAuth': authusrinfo,
                 });
                 _msgController.clear();
                 focusNode.requestFocus();
@@ -128,6 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _msgController.text,
                 pattern: LanguagePattern.english,
               );
+              final Map authusrinfo = jsonDecode(Supabase.instance.client.auth.currentUser!.id);
               final storage = await SharedPreferences.getInstance();
               String usr = 'DefaultFlutterUser';
               if (storage.getString('username') != null) {
@@ -136,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await Supabase.instance.client.from('table').insert({
                 'message': censoredInput.censored,
                 'username': usr,
-                'userAuth': userSB,
+                'userAuth': authusrinfo["id"],
               });
               _msgController.clear();
               focusNode.requestFocus();
@@ -238,33 +240,25 @@ Row? ConditionalRowSUSI(Session? session) {
     return (Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Column(
-          children: [
-            FilledButton(
-              onPressed: () async {
-                SBuser = await signUp(
-                  LoginemailController.text,
-                  LoginpasswordController.text,
-                );
-              },
-              child: Text("Sign Up"),
-            ),
-          ],
+        FilledButton(
+          onPressed: () async {
+            SBuser = await signUp(
+              LoginemailController.text,
+              LoginpasswordController.text,
+            );
+          },
+          child: Text("Sign Up"),
         ),
-        Column(
-          children: [
-            FilledButton(
-              onPressed: () async {
-                List userSession = await signIn(
-                  LoginemailController.text,
-                  LoginpasswordController.text,
-                );
-                SBuser = userSession[0];
-                SBsession = userSession[1];
-              },
-              child: Text("Sign In"),
-            ),
-          ],
+        FilledButton(
+          onPressed: () async {
+            List userSession = await signIn(
+              LoginemailController.text,
+              LoginpasswordController.text,
+            );
+            SBuser = userSession[0];
+            SBsession = userSession[1];
+          },
+          child: Text("Sign In"),
         ),
       ],
     ));
@@ -293,4 +287,6 @@ Future<List> signIn(String emailInput, String passwordInput) async {
 
 Future<void> signOut() async {
   await Supabase.instance.client.auth.signOut();
+  SBsession = null;
+  SBuser = null;
 }
