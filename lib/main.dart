@@ -4,6 +4,10 @@ import 'apikeys.dart' as api;
 import 'package:censor_it/censor_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final TextEditingController LoginemailController = TextEditingController();
+final TextEditingController LoginpasswordController = TextEditingController();
+User? SBuser;
+Session? SBsession;
 Future<void> main() async {
   await Supabase.initialize(url: api.url, anonKey: api.anonkey);
   runApp(MaterialApp(home: MinuteApp()));
@@ -58,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
       .order('createdAt', ascending: true);
   final TextEditingController _msgController = TextEditingController();
   final FocusNode focusNode = FocusNode();
+  User? userSB = Supabase.instance.client.auth.currentUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Enter your message here",
+                hintText: enterMessageTxt(),
                 filled: true,
                 fillColor: Colors.white70,
                 hoverColor: Color.fromRGBO(93, 183, 222, 1),
@@ -110,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 await Supabase.instance.client.from('table').insert({
                   'message': censoredInput.censored,
                   'username': usr,
+                  'userAuth': userSB,
                 });
                 _msgController.clear();
                 focusNode.requestFocus();
@@ -130,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await Supabase.instance.client.from('table').insert({
                 'message': censoredInput.censored,
                 'username': usr,
+                'userAuth': userSB,
               });
               _msgController.clear();
               focusNode.requestFocus();
@@ -185,62 +192,92 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final supabase = Supabase.instance.client;
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  User? user;
-  Session? session;
-  Future<void> signUp(String emailInput, String passwordInput) async {
-    final AuthResponse res = await supabase.auth.signUp(
-      email: emailInput,
-      password: passwordInput,
-    );
-    user = res.user;
-  }
-
-  Future<void> signIn(String emailInput, String passwordInput) async {
-    final AuthResponse res = await supabase.auth.signInWithPassword(
-      email: emailInput,
-      password: passwordInput,
-    );
-    user = res.user;
-    session = res.session;
-  }
-
-  Future<void> signOut() async {
-    await supabase.auth.signOut();
-  }
   @override
   Widget build(BuildContext context) {
     return (Column(
       children: [
         TextField(
-          controller: emailController,
+          controller: LoginemailController,
           decoration: InputDecoration(label: Text("Enter your email")),
         ),
         TextField(
-          controller: passwordController,
+          controller: LoginpasswordController,
           decoration: InputDecoration(label: Text("Enter your password")),
         ),
-        Row(
-          children: [
-            FilledButton(
-                onPressed: () async {
-                  await signUp(emailController.text, passwordController.text);
-                },
-                child: Text("Sign Up")),
-            FilledButton(
-                onPressed: () async {
-                  await signIn(emailController.text, passwordController.text);
-                },
-                child: Text("Sign In")),
-            FilledButton(
-                onPressed: () async {
-                  await signOut();
-                },
-                child: Text("Sign Out")),
+        ?ConditionalRowSUSI(SBsession),
+        ?ConditionalButtonSignOut(SBsession),
           ],
-        ),
-      ],
-    ));
+        )
+    );
   }
+}
+
+enterMessageTxt(){
+  final User? user = Supabase.instance.client.auth.currentUser;
+  if (user!=null){
+    return("Enter your message here");
+  } else {
+    return("You need to sign in to send messages");
+  }
+}
+
+FilledButton? ConditionalButtonSignOut(Session? session){
+  if (session!=null){
+    return(FilledButton(onPressed: () async {
+      await Supabase.instance.client.auth.signOut();
+    }, child: Text("Sign Out"),));
+  } else {
+    return(null);
+  }
+}
+
+
+Row? ConditionalRowSUSI(Session? session){
+  if(session==null){
+    return(
+        Row(
+            children: [
+              FilledButton(
+                  onPressed: () async {
+                    User? user = await signUp(LoginemailController.text, LoginpasswordController.text);
+                  },
+                  child: Text("Sign Up")),
+              FilledButton(
+                  onPressed: () async {
+                    List userSession = await signIn(LoginemailController.text, LoginpasswordController.text);
+                    SBuser  = userSession[0];
+                    SBsession = userSession[1];
+                  },
+                  child: Text("Sign In")),
+
+            ]
+        ));
+  } else{
+    return(null);
+  }
+}
+
+
+Future<User?> signUp(String emailInput, String passwordInput) async {
+  final AuthResponse res = await Supabase.instance.client.auth.signUp(
+    email: emailInput,
+    password: passwordInput,
+  );
+  User? user = res.user;
+  return(user);
+}
+
+Future<List> signIn(String emailInput, String passwordInput) async {
+  final AuthResponse res = await Supabase.instance.client.auth.signInWithPassword(
+    email: emailInput,
+    password: passwordInput,
+  );
+  User? user = res.user;
+  Session? session = res.session;
+  List UserSessionList = [user, session];
+  return(UserSessionList);
+}
+
+Future<void> signOut() async {
+  await Supabase.instance.client.auth.signOut();
 }
