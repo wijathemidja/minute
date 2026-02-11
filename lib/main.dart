@@ -206,57 +206,72 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         ?ConditionalRowSUSI(SBsession),
         ?ConditionalButtonSignOut(SBsession),
-          ],
-        )
-    );
+      ],
+    ));
   }
 }
 
-enterMessageTxt(){
+enterMessageTxt() {
   final User? user = Supabase.instance.client.auth.currentUser;
-  if (user!=null){
-    return("Enter your message here");
+  if (user != null) {
+    return ("Enter your message here");
   } else {
-    return("You need to sign in to send messages");
+    return ("You need to sign in to send messages");
   }
 }
 
-FilledButton? ConditionalButtonSignOut(Session? session){
-  if (session!=null){
-    return(FilledButton(onPressed: () async {
-      await Supabase.instance.client.auth.signOut();
-    }, child: Text("Sign Out"),));
+FilledButton? ConditionalButtonSignOut(Session? session) {
+  if (session != null) {
+    return (FilledButton(
+      onPressed: () async {
+        await Supabase.instance.client.auth.signOut();
+      },
+      child: Text("Sign Out"),
+    ));
   } else {
-    return(null);
+    return (null);
   }
 }
 
-
-Row? ConditionalRowSUSI(Session? session){
-  if(session==null){
-    return(
-        Row(
-            children: [
-              FilledButton(
-                  onPressed: () async {
-                    SBuser = await signUp(LoginemailController.text, LoginpasswordController.text);
-                  },
-                  child: Text("Sign Up")),
-              FilledButton(
-                  onPressed: () async {
-                    List userSession = await signIn(LoginemailController.text, LoginpasswordController.text);
-                    SBuser  = userSession[0];
-                    SBsession = userSession[1];
-                  },
-                  child: Text("Sign In")),
-
-            ]
-        ));
-  } else{
-    return(null);
+Row? ConditionalRowSUSI(Session? session) {
+  if (session == null) {
+    return (Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Column(
+          children: [
+            FilledButton(
+              onPressed: () async {
+                SBuser = await signUp(
+                  LoginemailController.text,
+                  LoginpasswordController.text,
+                );
+              },
+              child: Text("Sign Up"),
+            ),
+          ],
+        ),
+        Column(
+          children: [
+            FilledButton(
+              onPressed: () async {
+                List userSession = await signIn(
+                  LoginemailController.text,
+                  LoginpasswordController.text,
+                );
+                SBuser = userSession[0];
+                SBsession = userSession[1];
+              },
+              child: Text("Sign In"),
+            ),
+          ],
+        ),
+      ],
+    ));
+  } else {
+    return (null);
   }
 }
-
 
 Future<User?> signUp(String emailInput, String passwordInput) async {
   final AuthResponse res = await Supabase.instance.client.auth.signUp(
@@ -264,18 +279,16 @@ Future<User?> signUp(String emailInput, String passwordInput) async {
     password: passwordInput,
   );
   User? user = res.user;
-  return(user);
+  return (user);
 }
 
 Future<List> signIn(String emailInput, String passwordInput) async {
-  final AuthResponse res = await Supabase.instance.client.auth.signInWithPassword(
-    email: emailInput,
-    password: passwordInput,
-  );
+  final AuthResponse res = await Supabase.instance.client.auth
+      .signInWithPassword(email: emailInput, password: passwordInput);
   User? user = res.user;
   Session? session = res.session;
   List UserSessionList = [user, session];
-  return(UserSessionList);
+  return (UserSessionList);
 }
 
 Future<void> signOut() async {
